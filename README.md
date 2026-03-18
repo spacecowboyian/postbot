@@ -45,8 +45,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 | Channel | Slug | Platforms |
 |---------|------|-----------|
-| OIO Racing | `oio` | Instagram, TikTok, YouTube |
-| Tiny Prints | `tiny-prints` | Instagram, TikTok |
+| OIO Racing | `oio` | Instagram, YouTube |
+| Tiny Prints | `tiny-prints` | Instagram |
 | Personal | `personal` | Instagram, Threads |
 
 ## Architecture

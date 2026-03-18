@@ -92,7 +92,7 @@ The service role bypasses RLS. Never disable RLS.
 |--------|------|----------|-------|
 | id | uuid | NO | PK |
 | channel_id | uuid | NO | FK -> channels.id CASCADE |
-| platform | text | NO | 'instagram','tiktok','youtube','threads','x' |
+| platform | text | NO | 'instagram','youtube','threads','x' |
 | handle | text | NO | e.g. '@OIORacing' |
 | credentials_ref | text | NO | Env var name on worker e.g. 'OIO_INSTAGRAM_TOKEN' |
 | active | boolean | NO | Default: true |
@@ -145,7 +145,7 @@ The service role bypasses RLS. Never disable RLS.
 | hashtags_used | text[] | YES | Default: '{}' |
 | status | text | NO | See Status Lifecycle below |
 | posted_at | timestamptz | YES | |
-| platform_post_ids | jsonb | YES | {instagram:'xxx', tiktok:'yyy'} |
+| platform_post_ids | jsonb | YES | {instagram:'xxx', youtube:'yyy'} |
 | post_errors | jsonb | YES | {platform:'error message'} |
 | is_evergreen | boolean | NO | Default: false |
 | storage_cleared_at | timestamptz | YES | Null until cleanup runs |
@@ -211,7 +211,6 @@ interface MediaObject {
   creatomate_status?: 'queued' | 'rendering' | 'done' | 'failed'
   platform_variants?: {         // Per-platform processed output paths
     instagram?: string
-    tiktok?: string
     youtube?: string
     threads?: string
     x?: string
@@ -226,9 +225,9 @@ interface MediaObject {
 
 | Slug | ID | Platforms |
 |------|----|-----------|
-| oio | 93b1db85-d063-49bb-b25c-87c27f32930b | instagram, tiktok, youtube |
+| oio | 93b1db85-d063-49bb-b25c-87c27f32930b | instagram, youtube |
 | personal | d88229d2-dc3b-4816-b4d0-8ac22d871342 | instagram, threads |
-| tiny-prints | ca060f63-8256-474c-94c5-f7328111dde2 | instagram, tiktok |
+| tiny-prints | ca060f63-8256-474c-94c5-f7328111dde2 | instagram |
 
 ---
 
@@ -325,7 +324,6 @@ Polls Supabase every 60 seconds for approved posts due to fire.
 
 **Platform adapters** -- implement one module per platform:
 - `src/platforms/instagram.ts`
-- `src/platforms/tiktok.ts`
 - `src/platforms/youtube.ts`
 - `src/platforms/threads.ts`
 - `src/platforms/x.ts`
@@ -406,7 +404,6 @@ The worker translates this into Creatomate's render JSON format.
 
 ### Platform video upload notes
 - **Instagram Reels:** Use Content Publishing API. Upload video via resumable upload, then publish.
-- **TikTok:** Use Content Posting API v2. Direct post or inbox post flow.
 - **YouTube Shorts:** Use YouTube Data API v3. Resumable upload to `/upload/youtube/v3/videos`.
 - **Threads:** Use Threads API (Meta). Similar flow to Instagram.
 - **X:** Use v2 media upload API. Chunked upload required for video.

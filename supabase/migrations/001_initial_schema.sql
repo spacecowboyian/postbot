@@ -18,7 +18,7 @@ create table channels (
   voice_config    text not null,                     -- full system prompt for Claude
   audience_notes  text,                              -- who we're talking to
   hashtag_notes   text,                              -- guidance for Claude on tag selection
-  default_platforms text[] not null default '{}',    -- ['instagram','tiktok','youtube']
+  default_platforms text[] not null default '{}',    -- ['instagram','youtube']
   active          boolean not null default true,
   created_at      timestamptz not null default now()
 );
@@ -34,7 +34,7 @@ comment on column channels.voice_config is
 create table accounts (
   id              uuid primary key default uuid_generate_v4(),
   channel_id      uuid not null references channels(id) on delete cascade,
-  platform        text not null,                     -- 'instagram' | 'tiktok' | 'youtube' | 'threads' | 'x'
+  platform        text not null,                     -- 'instagram' | 'youtube' | 'threads' | 'x'
   handle          text not null,                     -- '@OIORacing'
   credentials_ref text not null,                     -- env var name on worker e.g. 'OIO_INSTAGRAM_TOKEN'
   active          boolean not null default true,
@@ -104,7 +104,6 @@ create table posts (
   --   creatomate_status: text,       (queued|rendering|done|failed)
   --   platform_variants: {           (platform -> processed path)
   --     instagram: text,
-  --     tiktok: text,
   --     youtube: text,
   --     threads: text,
   --     x: text
@@ -130,7 +129,7 @@ create table posts (
 
   -- Post results
   posted_at           timestamptz,
-  platform_post_ids   jsonb default '{}',            -- {instagram: 'xxx', tiktok: 'yyy'}
+  platform_post_ids   jsonb default '{}',            -- {instagram: 'xxx', youtube: 'yyy'}
   post_errors         jsonb default '{}',            -- {platform: 'error message'}
 
   -- Storage cleanup
@@ -146,7 +145,7 @@ comment on column posts.media is
   'JSONB array of media objects. Supports video and image. See migration comment for full schema.';
 
 comment on column posts.platform_overrides is
-  'Optional per-platform text variations. e.g. {"tiktok": "slightly different caption"}';
+  'Optional per-platform text variations. e.g. {"x": "slightly different caption"}';  
 
 -- ============================================================
 -- CREATOMATE JOBS
@@ -301,7 +300,7 @@ values
   'You are the voice of OIO Racing (@OIORacing), an SCCA autocross and motorsport channel run by Ian. Your audience is car enthusiasts, autocross competitors, and motorsport fans. Write with energy and technical credibility. Be punchy -- short sentences hit harder. Use correct motorsport terminology. Always tag the event when known. Never use em dashes.',
   'Car enthusiasts, SCCA autocross competitors, DIY builders, BMW fans, motorsport watchers. They want authenticity over polish.',
   'Prioritize event-specific tags first, then car/series tags, then broad reach tags. Aim for 8-12 tags. Mix niche and broad.',
-  array['instagram','tiktok','youtube']
+  array['instagram','youtube']
 ),
 (
   'Tiny Prints',
@@ -309,7 +308,7 @@ values
   'You are the voice of Tiny Prints, Ian''s 3D printing business. Your audience is makers, hobbyists, and people looking for custom 3D-printed parts and products. Write with enthusiasm for the craft. Be helpful and specific about materials and use cases. Highlight precision and customization. Never use em dashes.',
   'Makers, hobbyists, RC car builders, automotive enthusiasts needing custom parts, gift buyers. They respond to process content and finished results.',
   'Mix maker community tags with product-specific tags. Include material tags when relevant (PLA, PETG, TPU). Aim for 10-15 tags.',
-  array['instagram','tiktok']
+  array['instagram']
 ),
 (
   'Personal',
@@ -330,12 +329,6 @@ select id, 'instagram', 18, 1,
 from channels where slug = 'oio';
 
 insert into queue_rules (channel_id, platform, min_gap_hours, max_per_day, preferred_days, preferred_windows)
-select id, 'tiktok', 24, 1,
-  array['wednesday','friday','saturday'],
-  '[{"start":"18:00","end":"21:00"}]'::jsonb
-from channels where slug = 'oio';
-
-insert into queue_rules (channel_id, platform, min_gap_hours, max_per_day, preferred_days, preferred_windows)
 select id, 'youtube', 72, 1,
   array['saturday','sunday'],
   '[{"start":"10:00","end":"13:00"}]'::jsonb
@@ -345,12 +338,6 @@ insert into queue_rules (channel_id, platform, min_gap_hours, max_per_day, prefe
 select id, 'instagram', 24, 1,
   array['monday','wednesday','friday'],
   '[{"start":"11:00","end":"13:00"},{"start":"18:00","end":"20:00"}]'::jsonb
-from channels where slug = 'tiny-prints';
-
-insert into queue_rules (channel_id, platform, min_gap_hours, max_per_day, preferred_days, preferred_windows)
-select id, 'tiktok', 24, 1,
-  array['tuesday','thursday','saturday'],
-  '[{"start":"19:00","end":"22:00"}]'::jsonb
 from channels where slug = 'tiny-prints';
 
 insert into queue_rules (channel_id, platform, min_gap_hours, max_per_day, preferred_days, preferred_windows)
